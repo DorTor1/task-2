@@ -1,0 +1,25 @@
+{
+  "name": "task-2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "cross-env NODE_ENV=test jest --coverage",
+    "test:unit": "cross-env NODE_ENV=test jest --coverage --testPathPattern=unit",
+    "test:integration": "cross-env NODE_ENV=test jest --coverage --testPathPattern=integration",
+    "test:docker": "docker compose -f docker-compose.yml --profile test run --rm --build api_gateway_test",
+    "dev": "docker compose -f docker-compose.yml up",
+    "build": "docker compose -f docker-compose.yml build",
+    "prod": "docker compose -f docker-compose.yml --profile prod up -d"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0"
+  }
+}

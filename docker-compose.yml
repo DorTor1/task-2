@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  api_gateway:
+    build:
+      context: ./api_gateway
+      target: runtime
+    env_file:
+      - ./api_gateway/.env.example
+    ports:
+      - '8080:8080'
+    depends_on:
+      - service_users
+      - service_orders
+
+  service_users:
+    build:
+      context: ./service_users
+      target: runtime
+    env_file:
+      - ./service_users/.env.example
+    volumes:
+      - users_data:/app/data
+    ports:
+      - '4001:4001'
+
+  service_orders:
+    build:
+      context: ./service_orders
+      target: runtime
+    env_file:
+      - ./service_orders/.env.example
+    volumes:
+      - orders_data:/app/data
+    ports:
+      - '4002:4002'
+
+  api_gateway_test:
+    profiles: ['test']
+    build:
+      context: ./api_gateway
+      target: build
+    env_file:
+      - ./api_gateway/.env.example
+    command: npm test
+    depends_on:
+      - service_users
+      - service_orders
+
+volumes:
+  users_data:
+  orders_data:
+
