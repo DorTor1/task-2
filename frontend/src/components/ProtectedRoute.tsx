@@ -4,11 +4,9 @@ import { Loader } from './Loader';
 
 export const ProtectedRoute = () => {
   const location = useLocation();
-  const { token, initializing, initialized } = useAuthStore((state) => ({
-    token: state.token,
-    initializing: state.initializing,
-    initialized: state.initialized,
-  }));
+  const token = useAuthStore((state) => state.token);
+  const initializing = useAuthStore((state) => state.initializing);
+  const initialized = useAuthStore((state) => state.initialized);
 
   if (initializing || !initialized) {
     return (

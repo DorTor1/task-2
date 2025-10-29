@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -7,15 +7,19 @@ import { useAuthStore } from '../store/authStore';
 import { formatDateTime } from '../utils/formatters';
 
 export const ProfilePage = () => {
-  const { user, updateProfile, isLoading } = useAuthStore((state) => ({
-    user: state.user,
-    updateProfile: state.updateProfile,
-    isLoading: state.isLoading,
-  }));
+  const user = useAuthStore((state) => state.user);
+  const updateProfile = useAuthStore((state) => state.updateProfile);
+  const isLoading = useAuthStore((state) => state.isLoading);
 
   const [name, setName] = useState(user?.name ?? '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  useEffect(() => {
+    if (user?.name) {
+      setName(user.name);
+    }
+  }, [user?.name]);
 
   if (!user) {
     return null;

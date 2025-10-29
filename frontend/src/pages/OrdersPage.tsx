@@ -33,11 +33,10 @@ const sortOptions = [
 const PAGE_LIMIT = 10;
 
 export const OrdersPage = () => {
-  const { user } = useAuthStore((state) => ({ user: state.user }));
+  const user = useAuthStore((state) => state.user);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const initialUserId = searchParams.get('userId') ?? '';
-  const searchKey = searchParams.toString();
+  const initialUserId = (searchParams.get('userId') ?? '').trim();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
@@ -55,60 +54,91 @@ export const OrdersPage = () => {
   const [newOrderMetadata, setNewOrderMetadata] = useState('');
 
   const isAdmin = user?.role === 'admin';
+  const userIdFromQuery = initialUserId;
 
   useEffect(() => {
-    if (isAdmin) {
-      return;
-    }
-
-    const defaultUserId = user?.id ?? '';
-
-    if (filterUserId !== '') {
-      setFilterUserId('');
-    }
-
-    if (filterUserIdInput !== '') {
-      setFilterUserIdInput('');
-    }
-
-    if (newOrderUserId !== defaultUserId) {
-      setNewOrderUserId(defaultUserId);
-    }
-
-    if (searchKey) {
-      setSearchParams({}, { replace: true });
+    if (!isAdmin) {
+      if (filterUserId !== '') {
+        setFilterUserId('');
+      }
+      if (filterUserIdInput !== '') {
+        setFilterUserIdInput('');
+      }
+      const currentUserId = user?.id ?? '';
+      if (newOrderUserId !== currentUserId) {
+        setNewOrderUserId(currentUserId);
+      }
+      if (userIdFromQuery) {
+        setSearchParams({}, { replace: true });
+      }
     }
   }, [
     isAdmin,
     user?.id,
+    userIdFromQuery,
     filterUserId,
     filterUserIdInput,
     newOrderUserId,
-    searchKey,
     setSearchParams,
   ]);
 
-  const loadOrders = useCallback(async () => {
-    setIsFetching(true);
-    try {
-      const result = await ordersApi.listOrders({
-        limit: PAGE_LIMIT,
-        offset: page * PAGE_LIMIT,
-        sort,
-        status,
-        userId: isAdmin ? (filterUserId ? filterUserId : undefined) : undefined,
-      });
-      setOrders(result.items);
-      setTotal(result.total);
-    } catch (error) {
-      toast.error(extractErrorMessage(error, 'Не удалось загрузить заказы'));
-    } finally {
-      setIsFetching(false);
+  useEffect(() => {
+    if (!isAdmin) {
+      return;
     }
-  }, [page, sort, status, filterUserId, isAdmin]);
+    if (filterUserId !== userIdFromQuery) {
+      setFilterUserId(userIdFromQuery);
+    }
+    if (filterUserIdInput !== userIdFromQuery) {
+      setFilterUserIdInput(userIdFromQuery);
+    }
+    if (userIdFromQuery && newOrderUserId !== userIdFromQuery) {
+      setNewOrderUserId(userIdFromQuery);
+    }
+  }, [isAdmin, userIdFromQuery, filterUserId, filterUserIdInput, newOrderUserId]);
+
+  const loadOrders = useCallback(
+    async (signal?: AbortSignal) => {
+      setIsFetching(true);
+      try {
+        const normalizedFilterUserId = filterUserId.trim();
+        const result = await ordersApi.listOrders(
+          {
+            limit: PAGE_LIMIT,
+            offset: page * PAGE_LIMIT,
+            sort,
+            status,
+            userId: isAdmin ? (normalizedFilterUserId ? normalizedFilterUserId : undefined) : undefined,
+          },
+          signal
+        );
+
+        if (signal?.aborted) {
+          return;
+        }
+
+        setOrders(result.items);
+        setTotal(result.total);
+      } catch (error) {
+        if ((error as { code?: string }).code === 'ERR_CANCELED') {
+          return;
+        }
+        toast.error(extractErrorMessage(error, 'Не удалось загрузить заказы'));
+      } finally {
+        if (!signal?.aborted) {
+          setIsFetching(false);
+        }
+      }
+    },
+    [page, sort, status, filterUserId, isAdmin]
+  );
 
   useEffect(() => {
-    loadOrders();
+    const controller = new AbortController();
+    void loadOrders(controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, [loadOrders]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PAGE_LIMIT)), [total]);
@@ -119,11 +149,13 @@ export const OrdersPage = () => {
     const trimmed = filterUserIdInput.trim();
     setFilterUserId(trimmed);
     if (trimmed) {
-      setSearchParams({ userId: trimmed }, { replace: true });
+      if (userIdFromQuery !== trimmed) {
+        setSearchParams({ userId: trimmed }, { replace: true });
+      }
       if (isAdmin) {
         setNewOrderUserId(trimmed);
       }
-    } else {
+    } else if (userIdFromQuery) {
       setSearchParams({}, { replace: true });
     }
   };
@@ -134,7 +166,9 @@ export const OrdersPage = () => {
     setFilterUserId('');
     setFilterUserIdInput('');
     setPage(0);
-    setSearchParams({}, { replace: true });
+    if (userIdFromQuery) {
+      setSearchParams({}, { replace: true });
+    }
   };
 
   const handleCreateOrder = async (event: FormEvent) => {

@@ -18,7 +18,7 @@ export interface CreateOrderPayload {
 }
 
 export const ordersApi = {
-  async listOrders(params: ListOrdersParams = {}): Promise<Paginated<Order>> {
+  async listOrders(params: ListOrdersParams = {}, signal?: AbortSignal): Promise<Paginated<Order>> {
     const query: Record<string, string | number> = {
       limit: params.limit ?? 20,
       offset: params.offset ?? 0,
@@ -35,6 +35,7 @@ export const ordersApi = {
 
     const { data } = await apiClient.get<ApiResponse<{ total: number; items: any[] }>>('/orders', {
       params: query,
+      signal,
     });
 
     if (!data.success) {

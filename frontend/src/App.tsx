@@ -10,6 +10,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { UsersPage } from './pages/UsersPage';
 import { useAuthStore } from './store/authStore';
 
+const UNAUTHORIZED_TOAST_ID = 'app-unauthorized-toast';
+
 const App = () => {
   const initialize = useAuthStore((state) => state.initialize);
 
@@ -20,7 +22,9 @@ const App = () => {
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ message?: string }>).detail;
-      toast.warn(detail?.message ?? 'Сессия истекла, авторизуйтесь снова.');
+      toast.warn(detail?.message ?? 'Сессия истекла, авторизуйтесь снова.', {
+        toastId: UNAUTHORIZED_TOAST_ID,
+      });
     };
     window.addEventListener('app:unauthorized', handler as EventListener);
     return () => {

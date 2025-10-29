@@ -10,13 +10,11 @@ import { extractErrorMessage } from '../../api/client';
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoading, clearError, error, token } = useAuthStore((state) => ({
-    login: state.login,
-    isLoading: state.isLoading,
-    clearError: state.clearError,
-    error: state.error,
-    token: state.token,
-  }));
+  const login = useAuthStore((state) => state.login);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const clearError = useAuthStore((state) => state.clearError);
+  const error = useAuthStore((state) => state.error);
+  const token = useAuthStore((state) => state.token);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

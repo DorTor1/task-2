@@ -9,13 +9,11 @@ import { useAuthStore } from '../../store/authStore';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register, isLoading, clearError, error, token } = useAuthStore((state) => ({
-    register: state.register,
-    isLoading: state.isLoading,
-    clearError: state.clearError,
-    error: state.error,
-    token: state.token,
-  }));
+  const register = useAuthStore((state) => state.register);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const clearError = useAuthStore((state) => state.clearError);
+  const error = useAuthStore((state) => state.error);
+  const token = useAuthStore((state) => state.token);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

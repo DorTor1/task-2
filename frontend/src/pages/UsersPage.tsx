@@ -14,7 +14,7 @@ const PAGE_LIMIT = 10;
 
 export const UsersPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore((state) => ({ user: state.user }));
+  const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);

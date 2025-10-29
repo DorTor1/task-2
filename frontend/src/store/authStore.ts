@@ -111,12 +111,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 }));
 
+const UNAUTHORIZED_EVENT = 'app:unauthorized';
+
+const handleUnauthorized = () => {
+  const { token, logout } = useAuthStore.getState();
+  if (!token) {
+    return;
+  }
+  logout();
+};
+
 if (typeof window !== 'undefined') {
-  window.addEventListener('app:unauthorized', () => {
-    const state = useAuthStore.getState();
-    if (state.token) {
-      state.logout();
-    }
-  });
+  const globalWindow = window as typeof window & { __appUnauthorizedHandler__?: EventListener };
+  if (globalWindow.__appUnauthorizedHandler__) {
+    window.removeEventListener(UNAUTHORIZED_EVENT, globalWindow.__appUnauthorizedHandler__);
+  }
+  globalWindow.__appUnauthorizedHandler__ = handleUnauthorized;
+  window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
 }
 
